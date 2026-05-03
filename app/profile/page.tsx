@@ -116,7 +116,9 @@ export default function Profile() {
       <main className="min-h-screen bg-slate-950 text-white p-6">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold mb-2">Profile</h1>
-          <p className="text-slate-400 mb-6">{email}</p>
+          <p className="text-slate-400 mb-6">
+            {username ? `@${username}` : email}
+          </p>
 
           <div className="border border-slate-800 bg-slate-900 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
             <div className="flex flex-col items-center gap-3">

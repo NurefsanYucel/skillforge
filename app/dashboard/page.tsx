@@ -11,7 +11,7 @@ type Goal = {
 };
 
 export default function Dashboard() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,14 @@ export default function Dashboard() {
         return;
       }
 
-      setUserEmail(data.user.email ?? null);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", data.user.id)
+        .single();
+
+      setDisplayName(profile?.username || data.user.email || "User");
+
       await fetchGoals();
       setLoading(false);
     }
@@ -119,7 +126,7 @@ export default function Dashboard() {
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center gap-6 p-6">
         <div className="w-full max-w-2xl">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-slate-400">Welcome: {userEmail}</p>
+          <p className="text-slate-400">Welcome: {displayName}</p>
         </div>
 
         <div className="border border-slate-800 bg-slate-900 rounded-2xl p-4 w-full max-w-2xl flex gap-2 shadow-xl">
