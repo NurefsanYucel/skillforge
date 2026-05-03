@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 
+// Type definition for learning resources connected to a goal
 type Resource = {
   id: string;
   title: string;
@@ -16,24 +17,33 @@ export default function GoalDetails({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Get goal id from dynamic route params
   const { id } = use(params);
 
+  // Goal and resource states
   const [goalTitle, setGoalTitle] = useState("");
   const [resources, setResources] = useState<Resource[]>([]);
+
+  // Form states for adding a new resource
   const [title, setTitle] = useState("");
   const [type, setType] = useState("video");
   const [url, setUrl] = useState("");
+
+  // Loading state while page data is being fetched
   const [loading, setLoading] = useState(true);
 
+  // Count completed resources
   const completedCount = resources.filter(
     (resource) => resource.status === "completed"
   ).length;
 
+  // Calculate progress percentage for the goal
   const progress =
     resources.length === 0
       ? 0
       : Math.round((completedCount / resources.length) * 100);
 
+  // Fetch selected goal title
   const fetchGoal = async () => {
     const { data } = await supabase
       .from("goals")
@@ -44,6 +54,7 @@ export default function GoalDetails({
     if (data) setGoalTitle(data.title);
   };
 
+  // Fetch all resources connected to this goal
   const fetchResources = async () => {
     const { data } = await supabase
       .from("resources")
@@ -56,8 +67,10 @@ export default function GoalDetails({
 
   useEffect(() => {
     async function loadPage() {
+      // Check if user is logged in
       const { data } = await supabase.auth.getUser();
 
+      // Redirect unauthenticated users to login page
       if (!data.user) {
         window.location.href = "/login";
         return;
@@ -71,6 +84,7 @@ export default function GoalDetails({
     loadPage();
   }, []);
 
+  // Adds a new learning resource to the current goal
   const handleAddResource = async () => {
     if (!title.trim()) return;
 
@@ -84,6 +98,7 @@ export default function GoalDetails({
 
     const { data: userData } = await supabase.auth.getUser();
 
+    // Save activity log for profile activity section
     await supabase.from("activity_logs").insert({
       user_id: userData.user?.id,
       action: "Added a resource",
@@ -94,26 +109,30 @@ export default function GoalDetails({
     fetchResources();
   };
 
+  // Updates resource status: todo, in_progress, or completed
   const handleStatusChange = async (resId: string, status: string) => {
     await supabase.from("resources").update({ status }).eq("id", resId);
-  
+
+    // Log activity only when a resource is completed
     if (status === "completed") {
       const { data: userData } = await supabase.auth.getUser();
-  
+
       await supabase.from("activity_logs").insert({
         user_id: userData.user?.id,
         action: "Completed a resource",
       });
     }
-  
+
     fetchResources();
   };
 
+  // Deletes a resource from the current goal
   const handleDeleteResource = async (resId: string) => {
     await supabase.from("resources").delete().eq("id", resId);
     fetchResources();
   };
 
+  // Show loading screen while data is loading
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -125,12 +144,14 @@ export default function GoalDetails({
   return (
     <main className="min-h-screen bg-slate-950 text-white p-6">
       <div className="max-w-3xl mx-auto">
+        {/* Navigation back to dashboard */}
         <a href="/dashboard" className="text-blue-400 hover:underline">
           ← Back to Dashboard
         </a>
 
         <h1 className="text-3xl font-bold mt-6 mb-4">{goalTitle}</h1>
 
+        {/* Goal progress card */}
         <div className="border border-slate-800 bg-slate-900 rounded-2xl p-4 mb-6 shadow-xl">
           <div className="flex justify-between mb-2">
             <p className="font-medium">Progress</p>
@@ -149,6 +170,7 @@ export default function GoalDetails({
           </p>
         </div>
 
+        {/* Add resource form */}
         <div className="border border-slate-800 bg-slate-900 rounded-2xl p-4 mb-6 flex flex-col gap-3 shadow-xl">
           <h2 className="text-xl font-semibold">Add Resource</h2>
 
@@ -159,6 +181,7 @@ export default function GoalDetails({
             onChange={(e) => setTitle(e.target.value)}
           />
 
+          {/* Select resource type */}
           <select
             className="border border-slate-700 bg-slate-950 text-white p-2 rounded"
             value={type}
@@ -193,6 +216,7 @@ export default function GoalDetails({
 
         <h2 className="text-xl font-semibold mb-3">Resources</h2>
 
+        {/* Empty state when no resources exist */}
         {resources.length === 0 ? (
           <div className="text-center text-slate-400 py-6">
             <p>No resources yet 📚</p>
@@ -212,6 +236,7 @@ export default function GoalDetails({
                     <h3 className="font-bold">{resource.title}</h3>
                     <p className="text-sm text-slate-400">{resource.type}</p>
 
+                    {/* Show external link only if URL exists */}
                     {resource.url && (
                       <a
                         href={resource.url}
@@ -231,6 +256,7 @@ export default function GoalDetails({
                   </button>
                 </div>
 
+                {/* Update resource status */}
                 <select
                   className="border border-slate-700 bg-slate-950 text-white p-2 rounded mt-3"
                   value={resource.status}
